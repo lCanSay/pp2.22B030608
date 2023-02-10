@@ -1,29 +1,29 @@
 class Shape():
     def area(self):
-        print(self.area)
+        print(self.s)
     class Square():
         def __init__(self, length):
-            self.area = 0
+            self.s = 0
             self.length = length
-            self.area = length *length
+            self.s = length *length
         def area(self):
-            print(self.area)
+            print(self.s)
 
 
 class Rectangle(Shape.Square):
     def __init__(self, length, width):
         super().__init__(length)
         self.width = width
-        self.area = 0
-        self.area = length * width
+        self.s = 0
+        self.s = length * width
     def area(self):
-        print(self.area)
+        print(self.s)
 
 
 
 baza = Shape.Square(13)
-print(baza.area)
+baza.area()
 
 
 rec = Rectangle(3,4)
-print(rec.area)
+rec.area()
