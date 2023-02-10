@@ -10,7 +10,7 @@ class Shape():
             print(self.area)
 
 
-class Rectangle(Shape):
+class Rectangle(Shape.Square):
     def __init__(self, length, width):
         super().__init__(length)
         self.width = width
