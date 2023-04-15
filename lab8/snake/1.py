@@ -67,7 +67,19 @@ class Food:
 
 class Snake:
     def __init__(self):
-        self.body = [Point(10, 11)]
+        xpoints = []
+        ypoints = []
+        #b = Point(random.randint(0, 20), random.randint(0, 20))
+        # for i in wall.body:
+        #     xpoints.append(i.x)
+        #     ypoints.append(i.y)
+        # while(True):
+        #     if (b.x in xpoints or b.y in ypoints):
+        #         a = Point(random.randint(0, 20), random.randint(0, 20))
+        #     else:
+        #        self.body = [a] 
+        #        break
+        self.body = [Point(10,11)]
         self.dx = 0
         self.dy = 0
         self.level = 1
@@ -111,9 +123,8 @@ def main():
     pygame.init()
     SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
     CLOCK = pygame.time.Clock()
-    # SCREEN.fill(BLACK)
     scoref = 0
-    FPS = 5
+    FPS = 6
     snake = Snake()
     wall = Wall(snake.level)
     food = Food(snake, wall)
@@ -169,7 +180,7 @@ def main():
             if(snake.level!=3):
                 snake = Snake()
                 snake.level += 1
-                FPS+=5
+                FPS+=1  #speed
                 wall = Wall(snake.level)
             else:
                 time.sleep(0.5)                   
