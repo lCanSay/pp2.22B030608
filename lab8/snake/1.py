@@ -1,6 +1,7 @@
 import pygame, sys
 from pygame.locals import *
 import random, time
+from threading import Timer
 
 from os import scandir
 from select import select
@@ -42,43 +43,37 @@ class Wall:
             pygame.draw.rect(SCREEN, (226,135,67), rect)
 
 class Food:
-    def __init__(self, snake, wall):      #random spawn based on food and snake
-        a = Point(random.randint(0, 20), random.randint(0, 20))
+    def __init__(self, snake, wall):      #random spawn based on walls and snake
+        self.a = Point(random.randint(0, 19), random.randint(0, 19))
         xpoints = []
         ypoints = []
         for i in wall.body:
             xpoints.append(i.x)
             ypoints.append(i.y)
-        for i in range(len(snake.body)-1):
-            xpoints.append(snake.body[i].x)
-            ypoints.append(snake.body[i].y)
+        for i in snake.body:
+            xpoints.append(i.x)
+            ypoints.append(i.y)
         while(True):
-            if (a.x in xpoints or a.y in ypoints):
-                a = Point(random.randint(0, 20), random.randint(0, 20))
+            if (self.a.x in xpoints or self.a.y in ypoints):
+                self.a = Point(random.randint(0, 19), random.randint(0, 19))
             else:
-               self.location = a 
+               self.location = self.a 
                break
 
     def draw(self):
-        point = self.location
-        rect = pygame.Rect(BLOCK_SIZE * point.x, BLOCK_SIZE * point.y, BLOCK_SIZE, BLOCK_SIZE)
+        rect = pygame.Rect(BLOCK_SIZE * self.location.x, BLOCK_SIZE * self.location.y, BLOCK_SIZE, BLOCK_SIZE)
         pygame.draw.rect(SCREEN, (0, 255, 0), rect)
+
+class TimeFood(Food):
+
+    def draw(self):
+        rect = pygame.Rect(BLOCK_SIZE * self.location.x, BLOCK_SIZE * self.location.y, BLOCK_SIZE, BLOCK_SIZE)
+        pygame.draw.rect(SCREEN, (255, 255, 0), rect)
+
 
 
 class Snake:
     def __init__(self):
-        xpoints = []
-        ypoints = []
-        #b = Point(random.randint(0, 20), random.randint(0, 20))
-        # for i in wall.body:
-        #     xpoints.append(i.x)
-        #     ypoints.append(i.y)
-        # while(True):
-        #     if (b.x in xpoints or b.y in ypoints):
-        #         a = Point(random.randint(0, 20), random.randint(0, 20))
-        #     else:
-        #        self.body = [a] 
-        #        break
         self.body = [Point(10,11)]
         self.dx = 0
         self.dy = 0
@@ -109,14 +104,19 @@ class Snake:
                 self.body.append(Point(food.location.x, food.location.y))
                 return True
     def check_wall(self, wall):               #collision check for walls, same as for the food
-        for i in range(len(wall.body)-1):
+        for i in range(len(wall.body)):
             if self.body[0].x == wall.body[i].x:
                 if self.body[0].y == wall.body[i].y:
                     return True
-        if(self.body[0].x >= WIDTH or self.body[0].y >= HEIGHT or self.body[0].x < 0 or self.body[0].y < 0): #checking for border collision
+        if(self.body[0].x >= WIDTH/20 or self.body[0].y >= HEIGHT/20 or self.body[0].x < 0 or self.body[0].y < 0): #checking for border collision
             return True
         return False
     
+
+ADDFOOD = pygame.USEREVENT + 1
+pygame.time.set_timer(ADDFOOD, 250)
+
+
 
 def main():
     global SCREEN, CLOCK, scoref
@@ -128,7 +128,7 @@ def main():
     snake = Snake()
     wall = Wall(snake.level)
     food = Food(snake, wall)
-
+    tfood = TimeFood(snake,wall)
 
     while True:
         for event in pygame.event.get():
@@ -155,7 +155,7 @@ def main():
         snake.move()
         if(snake.check_collision(food)):
             scoref += 1
-            food = Food(snake, wall)
+            food = Food(snake,wall)
         if(snake.check_wall(wall)):
             time.sleep(0.5)                   
             SCREEN.fill(WHITE)
@@ -170,6 +170,8 @@ def main():
         snake.draw()
         food.draw()
         wall.draw()
+        t = Timer(5.0, tfood.draw)
+        t.start()
         scores = font_small.render("Level: "+str(snake.level), True, WHITE)
         score1 = font_small.render("Score: "+str(scoref), True, WHITE)
         SCREEN.blit(scores, (360,20))
