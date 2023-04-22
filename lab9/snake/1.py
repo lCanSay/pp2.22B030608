@@ -66,7 +66,7 @@ class Food:
     def __del__(self):
         pass
 
-class TimeFood(Food):
+class TimeFood(Food):  #time limited food
     def draw(self):
         self.value = 2
         rect = pygame.Rect(BLOCK_SIZE * self.location.x, BLOCK_SIZE * self.location.y, BLOCK_SIZE, BLOCK_SIZE)
@@ -104,7 +104,7 @@ class Snake:
         if self.body[0].x == food.location.x:
             if self.body[0].y == food.location.y:
                 for i in range(1, food.value+1):
-                    self.body.append(Point(food.location.x - self.dx*(i-1), food.location.y-self.dy*(i-1)))
+                    self.body.append(Point(food.location.x - self.dx*(i-1), food.location.y-self.dy*(i-1)))  #Adding certain length to snake based on value
                 return True
     def check_wall(self, wall):               #collision check for walls, same as for the food
         for i in range(len(wall.body)):
@@ -129,8 +129,8 @@ def main():
     CLOCK = pygame.time.Clock()
     scoref = 0
     FPS = 6
-    time_counter = -1
-    f_counter = 0
+    time_counter = -1       #timer
+    f_counter = 0           #counter for usual food, to spawn time limited
 
     snake = Snake()
     wall = Wall(snake.level)
@@ -192,7 +192,7 @@ def main():
         food.draw()
         wall.draw()
         tfood.draw()
-        if time_counter == -1 and tfood.location != (-1,-1):    
+        if time_counter == -1 and tfood.location != (-1,-1):        #every time timer is 0, timefood moves from gamespace and when condition for timefoods appering is satisfied, timer equals to 5
             time_counter = 5
         if time_counter == 0:
             tfood.location = Point(-1,-1)
@@ -203,7 +203,7 @@ def main():
         SCREEN.blit(score1, (20,20))
 
 
-        if len(snake.body) > 6 and len(snake.body) % 2 == 1:
+        if len(snake.body) > 6 and len(snake.body) % 2 == 1:   #When score is > 6, next level and speed increase
             if(snake.level!=3):
                 snake = Snake()
                 snake.level += 1

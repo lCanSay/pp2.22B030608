@@ -117,8 +117,8 @@ while not done:
             value = random.randint(1,3)
             coin_img = pygame.transform.scale(C1.image,(10+10*value,10+10*value))#every time car hits a coin, value randomly changes and based on that, size changes too
             C1.rect.center = (random.randint(30, 370), 0)
-        if COIN_SCORE % 3 == 0 and COIN_SCORE != 0:
-            speed = COIN_SCORE/3 + 5
+        if COIN_SCORE >= 3 and COIN_SCORE != 0:   #every 3 coins increase enemy's speed by 2
+            speed = COIN_SCORE/3 * 2 + 1
 
         if pygame.sprite.spritecollideany(P1, enemies):
           pygame.mixer.Sound('racer\crash.wav').play()
