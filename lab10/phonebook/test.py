@@ -2,9 +2,8 @@ import psycopg2
 from config import config
 
 
-def insert_user():
-        a = str(input("Enter your nickname: "))
-        sql = """SELECT * from users WHERE user_name = '{}' """.format(a)
+def fetch_user(user_name):
+        sql = """SELECT * from users WHERE user_name = '{}' """.format(user_name)
         
         conn = None
         try:
@@ -14,18 +13,18 @@ def insert_user():
 
             cur.execute(sql)
             result = cur.fetchone() 
-            print(result)
 
             conn.commit()
             cur.close()
+            return result
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
         finally:
             if conn is not None:
-                conn.close()
+                conn.close() 
 
 
 
-
-if __name__ == '__main__':
-    insert_user()
+a = str(input("Enter your name: "))
+b = fetch_user(a)
+print(b)

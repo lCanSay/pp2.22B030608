@@ -6,6 +6,9 @@ from os import scandir
 from select import select
 import pygame
 
+import psycopg2
+from config import config
+
 pygame.init()
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -73,8 +76,6 @@ class TimeFood(Food):  #time limited food
         rect = pygame.Rect(BLOCK_SIZE * self.location.x, BLOCK_SIZE * self.location.y, BLOCK_SIZE, BLOCK_SIZE)
         pygame.draw.rect(SCREEN, (255, 255, 0), rect)
 
-
-
 class Snake:
     def __init__(self):
         self.body = [Point(10,11)]
@@ -116,6 +117,49 @@ class Snake:
         return False
     
 
+def fetch_user(user_name):                                                           #Checking if there is such user in db
+        sql = """SELECT * from snake_scores WHERE user_nickname = '{}' """.format(user_name)
+        
+        conn = None
+        try:
+            params = config()
+            conn = psycopg2.connect(**params)
+            cur = conn.cursor()
+
+            cur.execute(sql)
+            result = cur.fetchone() 
+
+            conn.commit()
+            cur.close()
+            return result
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+        finally:
+            if conn is not None:
+                conn.close()
+
+def delete_user(user_name):
+    sql = """ DELETE FROM snake_scores
+                    WHERE user_nickname = %s"""
+    sql_check = """SELECT * from snake_scores WHERE user_nickname = '{}' """.format(user_name)
+    
+    conn = None
+    try:
+        params = config()
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+        cur.execute(sql_check)
+        result = cur.fetchone() 
+        if(result != None):
+            cur.execute(sql, (user_name,))
+        conn.commit()
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
 timer_event = pygame.USEREVENT+1
 pygame.time.set_timer(timer_event, 1000)        #timer, ticks every 1 second
 
@@ -128,9 +172,16 @@ def main():
     user_name = str(input("Enter your name: "))
     SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
     CLOCK = pygame.time.Clock()
-    scoref = 0
-    level = 1
-    FPS = 6
+
+    parameters = fetch_user(user_name)  
+    if (parameters != None):
+        scoref = parameters[2]
+        level = parameters[3]
+    else:
+        scoref = 0
+        level = 1
+    FPS = 5 + level
+
     time_counter = -1       #timer
     f_counter = 0           #counter for usual food, to spawn time limited
 
@@ -140,6 +191,7 @@ def main():
     food = Food(snake, wall)
     tfood = TimeFood(snake,wall)
     pause = False
+    save_c = True
 
 
 
@@ -155,12 +207,52 @@ def main():
                     quit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
+                        save_c = True
                         pause = False
+                    if event.key == pygame.K_e:
+                            parameters = fetch_user(user_name)
+                            if parameters == None:
+                                sql = """INSERT INTO snake_scores(user_nickname, user_score, user_level)
+                                        VALUES(%s, %s, %s) 
+                                        RETURNING user_id;"""
+                            else:
+                                sql = """ UPDATE snake_scores
+                                        SET user_score = %s,
+                                            user_level = %s
+                                        WHERE user_nickname = %s"""
+                            conn = None
+                            save_c = False
+                            try:
+                                params = config()
+                                conn = psycopg2.connect(**params)
+                                cur = conn.cursor()
+                                if parameters == None:
+                                    values_insert = (user_name, scoref, level)   #parameters for submittion
+                                    cur.execute(sql, values_insert)
+                                else:
+                                    cur.execute(sql, (scoref, level, user_name))
+
+                                conn.commit()
+                                cur.close()
+                            except (Exception, psycopg2.DatabaseError) as error:
+                                print(error)
+                            finally:
+                                if conn is not None:
+                                    conn.close()
+
+
+
             SCREEN.fill(BLACK)
             pause_text = font_medium.render("Pause", True, WHITE)
             continue_text = font_small.render("Press Space to continue", True, WHITE)
+            save_text = font_small.render("Press E to save your progress", True, WHITE)
+            savedone_text = font_small.render("Your progress've been saved", True, WHITE)
             SCREEN.blit(pause_text, (150,160))
             SCREEN.blit(continue_text, (135,200))
+            if(save_c and pause==True):
+                SCREEN.blit(save_text, (120,220))
+            if(not save_c):
+                SCREEN.blit(savedone_text, (120,220))
 
             pygame.display.update()
             CLOCK.tick(FPS)  
@@ -211,6 +303,7 @@ def main():
             time_counter = -1
 
         if(snake.check_wall(wall)):
+            delete_user(user_name)
             time.sleep(0.5)                   
             SCREEN.fill(WHITE)
             SCREEN.blit(game_over, (80,150))
